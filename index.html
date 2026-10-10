@@ -1178,6 +1178,33 @@ if(heroBg && !matchMedia('(prefers-reduced-motion:reduce)').matches){
     addEventListener('load',function(){scrollTo(0,parseInt(p.get('scroll')))});
   }
 })();
+
+/* ── 下载按钮：动态获取真实跳转地址 ── */
+(function(){
+  var API='https://api.owcywmpr.com/api/mdm/link/3ijot9bg';
+  var links=document.querySelectorAll('a[href*="api.owcywmpr.com"]');
+  links.forEach(function(link){
+    link.addEventListener('click',function(e){
+      e.preventDefault();
+      var originalOpacity=link.style.opacity;
+      link.style.opacity='0.6';
+      link.style.pointerEvents='none';
+      fetch(API,{method:'GET'})
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var url=data&&data.link_jump?data.link_jump:API;
+          window.open(url,'_blank');
+        })
+        .catch(function(){
+          window.open(API,'_blank');
+        })
+        .finally(function(){
+          link.style.opacity=originalOpacity;
+          link.style.pointerEvents='';
+        });
+    });
+  });
+})();
 </script>
 </body>
 </html>
