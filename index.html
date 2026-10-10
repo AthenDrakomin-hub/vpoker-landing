@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V-POKER · 入局即王者 — App下载</title>
+<meta name="description" content="V-POKER 在线扑克竞技平台，抢庄牛牛、通比牛牛、炸金花、德州扑克四大玩法，万人实时竞技，公平公正安全保障。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+SC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   V-POKER Landing Page
+   四组数值：
+   色板  canvas=#0A0806(暖黑)  world=#1A1410(深棕黑)  accent=#D4AF37(金)  event=#C8102E(赛事红)
+   字阶  display 7rem / h1 4.5rem / h2 2.75rem / body 16px / meta 12px
+   圆角  shell=0  card=4px  control=2px  pill=999px（只有可点的才圆）
+   栅格  gut=clamp(24px,4vw,72px)  卡片缝隙=4px
+   ═══════════════════════════════════════════════════════════════ */
+
+:root{
+  --canvas:#0A0806;
+  --world:#16110C;
+  --world-2:#1F1812;
+  --accent:#D4AF37;
+  --accent-light:#E8C96A;
+  --accent-dark:#A8862A;
+  --event:#C8102E;
+  --event-dark:#8B0A1F;
+  --ink:#F5E6C8;
+  --ink-dim:#B8A88A;
+  --muted:#7A6E5C;
+  --line:rgba(212,175,55,.18);
+  --line-strong:rgba(212,175,55,.35);
+
+  --gut:clamp(24px,4vw,72px);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+
+  --font-display:'Playfair Display','Noto Serif SC',Georgia,serif;
+  --font-cn:'Noto Serif SC','Songti SC',serif;
+  --font-body:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--canvas);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button,a[href]{min-height:24px}
+
+.wrap{padding-inline:var(--gut);max-width:1440px;margin:0 auto}
+
+/* ── 通用标签 ── */
+.meta-tag{
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--accent);
+  font-weight:600;
+}
+.section-label{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:18px;
+}
+.section-label::before{
+  content:"";width:28px;height:1px;background:var(--accent);
+}
+
+/* ── 入场揭示 ── */
+.rv{opacity:0;transform:translateY(28px);
+  transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.rv.in{opacity:1;transform:none}
+.rv-d1{transition-delay:.1s}.rv-d2{transition-delay:.2s}
+.rv-d3{transition-delay:.3s}.rv-d4{transition-delay:.4s}
+
+/* Hero 首屏纯CSS入场（不依赖JS，加性安全） */
+.ha{opacity:0;transform:translateY(24px);animation:haIn .9s var(--ease-out) forwards}
+.ha-d1{animation-delay:.15s}.ha-d2{animation-delay:.3s}
+.ha-d3{animation-delay:.45s}.ha-d4{animation-delay:.6s}
+@keyframes haIn{to{opacity:1;transform:none}}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  .rv,.ha{opacity:1;transform:none}
+}
+
+/* ═══════════════ NAV ═══════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px var(--gut);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,rgba(10,8,6,.92),rgba(10,8,6,.0));
+  transition:background .4s var(--ease),backdrop-filter .4s var(--ease);
+}
+nav.scrolled{
+  background:rgba(10,8,6,.94);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo svg{width:32px;height:32px}
+.nav-logo span{
+  font-family:var(--font-display);
+  font-size:22px;font-weight:900;letter-spacing:.04em;
+  color:var(--ink);
+}
+.nav-logo span em{color:var(--accent);font-style:normal}
+.nav-links{display:flex;gap:36px;align-items:center}
+.nav-links a{
+  font-size:14px;color:var(--ink-dim);
+  transition:color .3s var(--ease);
+  position:relative;
+}
+.nav-links a:hover{color:var(--accent)}
+.nav-links a::after{
+  content:"";position:absolute;bottom:-4px;left:0;width:0;height:1px;
+  background:var(--accent);transition:width .3s var(--ease);
+}
+.nav-links a:hover::after{width:100%}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 24px;
+  background:var(--accent);color:#1A1410;
+  font-size:14px;font-weight:700;letter-spacing:.04em;
+  border-radius:999px;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+}
+.nav-cta:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(212,175,55,.35);
+}
+.nav-cta svg{width:16px;height:16px}
+
+@media(max-width:860px){
+  .nav-links{display:none}
+}
+
+/* ═══════════════ HERO ═══════════════ */
+.hero{
+  position:relative;
+  height:100svh;min-height:680px;
+  overflow:hidden;
+  display:flex;align-items:center;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:url('assets/hero-bg.jpg') center/cover no-repeat;
+  transform:scale(1.05);
+  animation:heroIn 2.8s var(--ease-out) both;
+}
+@keyframes heroIn{
+  from{transform:scale(1.15);opacity:.3}
+  to{transform:scale(1.05);opacity:1}
+}
+.hero-scrim{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,rgba(10,8,6,.92) 0%,rgba(10,8,6,.6) 45%,rgba(10,8,6,.2) 100%),
+    linear-gradient(180deg,rgba(10,8,6,.5) 0%,transparent 30%,rgba(10,8,6,.85) 100%);
+}
+.hero-gold-line{
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.6;
+}
+.hero-content{
+  position:relative;z-index:2;
+  padding:0 var(--gut);
+  max-width:720px;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;
+  border:1px solid var(--line-strong);
+  border-radius:999px;
+  font-size:12px;letter-spacing:.12em;
+  color:var(--accent-light);
+  margin-bottom:28px;
+  backdrop-filter:blur(4px);
+}
+.hero-badge .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.hero h1{
+  font-family:var(--font-cn);
+  font-size:clamp(3.2rem,7.5vw,6.5rem);
+  font-weight:900;
+  line-height:1.05;
+  letter-spacing:.02em;
+  color:var(--ink);
+  margin-bottom:8px;
+  text-shadow:0 4px 32px rgba(0,0,0,.5);
+}
+.hero h1 .gold{
+  background:linear-gradient(135deg,var(--accent-light) 0%,var(--accent) 50%,var(--accent-dark) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-subtitle{
+  font-family:var(--font-display);
+  font-size:clamp(1rem,1.6vw,1.25rem);
+  color:var(--ink-dim);
+  letter-spacing:.15em;
+  margin-bottom:36px;
+  font-weight:400;
+}
+.hero-subtitle span{color:var(--accent);margin:0 6px}
+
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:40px}
+.btn-download{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:16px 32px;
+  font-size:15px;font-weight:700;letter-spacing:.04em;
+  border-radius:999px;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+  position:relative;overflow:hidden;
+}
+.btn-download svg{width:22px;height:22px}
+.btn-download .btn-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.btn-download .btn-text small{font-size:10px;opacity:.7;font-weight:400;letter-spacing:.08em}
+.btn-download .btn-text strong{font-size:15px;font-weight:700}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent-light),var(--accent));
+  color:#1A1410;
+}
+.btn-primary:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 36px rgba(212,175,55,.4);
+}
+.btn-secondary{
+  background:rgba(255,255,255,.06);
+  color:var(--ink);
+  border:1px solid var(--line-strong);
+  backdrop-filter:blur(8px);
+}
+.btn-secondary:hover{
+  transform:translateY(-3px);
+  background:rgba(212,175,55,.1);
+  border-color:var(--accent);
+}
+
+.hero-trust{
+  display:flex;gap:28px;flex-wrap:wrap;
+  padding-top:28px;
+  border-top:1px solid var(--line);
+}
+.hero-trust-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.hero-trust-item svg{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+
+.hero-scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--muted);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+}
+.hero-scroll-hint .scroll-line{
+  width:1px;height:40px;
+  background:linear-gradient(180deg,var(--accent),transparent);
+  animation:scrollLine 2s infinite;
+}
+@keyframes scrollLine{
+  0%{transform:scaleY(0);transform-origin:top}
+  50%{transform:scaleY(1);transform-origin:top}
+  51%{transform:scaleY(1);transform-origin:bottom}
+  100%{transform:scaleY(0);transform-origin:bottom}
+}
+
+/* ═══════════════ GAMES SECTION ═══════════════ */
+.games{
+  background:var(--canvas);
+  padding:120px 0 100px;
+  position:relative;
+}
+.games::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-strong),transparent);
+}
+.games-head{
+  text-align:center;margin-bottom:64px;
+}
+.games-head h2{
+  font-family:var(--font-cn);
+  font-size:clamp(2rem,3.8vw,3.2rem);
+  font-weight:900;
+  color:var(--ink);
+  margin-bottom:12px;
+}
+.games-head p{
+  color:var(--muted);font-size:15px;max-width:480px;margin:0 auto;
+}
+
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px;
+}
+.game-card{
+  position:relative;
+  overflow:hidden;
+  aspect-ratio:16/10;
+  cursor:pointer;
+}
+.game-card img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .8s var(--ease-out);
+}
+.game-card:hover img{transform:scale(1.06)}
+.game-card-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 30%,rgba(10,8,6,.9) 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:32px;
+}
+.game-card-num{
+  font-family:var(--font-display);
+  font-size:13px;color:var(--accent);
+  letter-spacing:.2em;margin-bottom:8px;
+}
+.game-card h3{
+  font-family:var(--font-cn);
+  font-size:clamp(1.4rem,2.4vw,2rem);
+  font-weight:900;color:var(--ink);
+  margin-bottom:6px;
+}
+.game-card p{
+  font-size:13px;color:var(--ink-dim);
+  max-width:360px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .4s var(--ease),transform .4s var(--ease);
+}
+.game-card:hover p{opacity:1;transform:none}
+.game-card-border{
+  position:absolute;inset:0;
+  border:1px solid transparent;
+  transition:border-color .4s var(--ease);
+  pointer-events:none;
+}
+.game-card:hover .game-card-border{
+  border-color:var(--accent);
+}
+
+@media(max-width:720px){
+  .games-grid{grid-template-columns:1fr}
+}
+
+/* ═══════════════ TOURNAMENT SECTION ═══════════════ */
+.tournament{
+  position:relative;
+  padding:120px 0;
+  overflow:hidden;
+}
+.tournament-bg{
+  position:absolute;inset:0;
+  background:url('assets/tournament-bg.jpg') center/cover no-repeat;
+}
+.tournament-scrim{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(135deg,rgba(139,10,31,.88) 0%,rgba(10,8,6,.92) 60%),
+    rgba(10,8,6,.7);
+}
+.tournament-inner{position:relative;z-index:2}
+.tournament-head{text-align:center;margin-bottom:56px}
+.tournament-head .section-label{justify-content:center;color:#FFB36B}
+.tournament-head .section-label::before{background:#FFB36B}
+.tournament-head h2{
+  font-family:var(--font-cn);
+  font-size:clamp(2rem,4vw,3.4rem);
+  font-weight:900;color:#fff;
+  margin-bottom:12px;
+}
+.tournament-head h2 em{
+  font-style:normal;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.tournament-head p{color:rgba(255,255,255,.65);font-size:15px}
+
+.tournament-cards{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:24px;
+  max-width:1000px;margin:0 auto;
+}
+.tournament-card{
+  background:rgba(20,12,8,.7);
+  border:1px solid rgba(255,180,80,.25);
+  border-radius:4px;
+  padding:36px 32px;
+  backdrop-filter:blur(8px);
+  position:relative;
+  overflow:hidden;
+  transition:transform .4s var(--ease),border-color .4s var(--ease);
+}
+.tournament-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(255,180,80,.5);
+}
+.tournament-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#FFD700,#FF6B35);
+}
+.tournament-prize{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:16px;
+}
+.tournament-prize .amount{
+  font-family:var(--font-display);
+  font-size:clamp(2rem,4vw,3rem);font-weight:900;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.tournament-prize .unit{font-size:14px;color:rgba(255,255,255,.6)}
+.tournament-card h3{
+  font-family:var(--font-cn);
+  font-size:clamp(1.3rem,2vw,1.7rem);font-weight:900;
+  color:#fff;margin-bottom:20px;
+}
+.tournament-schedule{
+  display:flex;flex-direction:column;gap:10px;
+  padding-top:20px;border-top:1px solid rgba(255,180,80,.15);
+}
+.tournament-schedule .row{
+  display:flex;align-items:center;gap:12px;
+  font-size:14px;color:rgba(255,255,255,.75);
+}
+.tournament-schedule .row svg{width:16px;height:16px;color:#FFB36B;flex-shrink:0}
+.tournament-schedule .days{color:#FFD700;font-weight:600}
+.tournament-cta{
+  text-align:center;margin-top:48px;
+}
+.tournament-cta .btn-primary{
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  color:#5C1A0A;
+}
+
+@media(max-width:720px){
+  .tournament-cards{grid-template-columns:1fr}
+}
+
+/* ═══════════════ TRUST SECTION ═══════════════ */
+.trust{
+  background:var(--world);
+  padding:120px 0;
+  position:relative;
+}
+.trust::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-strong),transparent);
+}
+.trust-head{text-align:center;margin-bottom:64px}
+.trust-head h2{
+  font-family:var(--font-cn);
+  font-size:clamp(2rem,3.8vw,3.2rem);font-weight:900;
+  color:var(--ink);margin-bottom:12px;
+}
+.trust-head p{color:var(--muted);font-size:15px}
+
+.trust-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line);
+}
+.trust-item{
+  background:var(--world);
+  padding:40px 28px;
+  text-align:center;
+  transition:background .4s var(--ease);
+}
+.trust-item:hover{background:var(--world-2)}
+.trust-icon{
+  width:56px;height:56px;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-strong);
+  border-radius:4px;
+  color:var(--accent);
+  transition:border-color .4s,background .4s;
+}
+.trust-item:hover .trust-icon{
+  border-color:var(--accent);
+  background:rgba(212,175,55,.08);
+}
+.trust-icon svg{width:26px;height:26px}
+.trust-item h4{
+  font-family:var(--font-cn);
+  font-size:17px;font-weight:700;
+  color:var(--ink);margin-bottom:8px;
+}
+.trust-item p{font-size:13px;color:var(--muted);line-height:1.6}
+
+@media(max-width:900px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.trust-grid{grid-template-columns:1fr}}
+
+/* ═══════════════ FINAL CTA ═══════════════ */
+.final-cta{
+  position:relative;
+  padding:140px 0;
+  overflow:hidden;
+  text-align:center;
+}
+.final-cta-bg{
+  position:absolute;inset:0;
+  background:url('assets/casino-scene.jpg') center/cover no-repeat;
+  transform:scale(1.05);
+}
+.final-cta-scrim{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at center,rgba(10,8,6,.7) 0%,rgba(10,8,6,.95) 100%);
+}
+.final-cta-inner{position:relative;z-index:2}
+.final-cta h2{
+  font-family:var(--font-cn);
+  font-size:clamp(2.2rem,5vw,4rem);font-weight:900;
+  color:var(--ink);margin-bottom:16px;
+  line-height:1.2;
+}
+.final-cta h2 .gold{
+  background:linear-gradient(135deg,var(--accent-light),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.final-cta p{
+  color:var(--ink-dim);font-size:16px;margin-bottom:40px;
+  max-width:480px;margin-left:auto;margin-right:auto;
+}
+.final-cta .hero-actions{justify-content:center}
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer{
+  background:var(--canvas);
+  border-top:1px solid var(--line);
+  padding:48px var(--gut) 32px;
+}
+.footer-inner{
+  max-width:1440px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  flex-wrap:wrap;gap:32px;
+}
+.footer-brand{max-width:320px}
+.footer-brand .nav-logo{margin-bottom:16px}
+.footer-brand p{font-size:12px;color:var(--muted);line-height:1.7}
+.footer-links{display:flex;gap:48px;flex-wrap:wrap}
+.footer-col h5{
+  font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px;font-weight:600;
+}
+.footer-col a{
+  display:block;font-size:13px;color:var(--muted);
+  margin-bottom:10px;transition:color .3s;
+}
+.footer-col a:hover{color:var(--accent)}
+.footer-bottom{
+  max-width:1440px;margin:32px auto 0;
+  padding-top:24px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  font-size:11px;color:var(--muted);
+}
+.footer-disclaimer{
+  max-width:1440px;margin:16px auto 0;
+  font-size:11px;color:rgba(122,110,92,.6);line-height:1.7;
+}
+
+/* ═══════════════ FLOATING CARDS DECORATION ═══════════════ */
+.float-cards{
+  position:absolute;right:-5%;top:50%;transform:translateY(-50%);
+  width:420px;height:420px;
+  pointer-events:none;z-index:1;
+  opacity:.15;
+}
+.float-cards img{
+  width:100%;height:100%;object-fit:contain;
+  animation:floatRotate 20s ease-in-out infinite;
+}
+@keyframes floatRotate{
+  0%,100%{transform:rotate(-5deg) translateY(0)}
+  50%{transform:rotate(5deg) translateY(-20px)}
+}
+@media(max-width:1100px){.float-cards{display:none}}
+
+/* ═══════════════ 活动Banner ═══════════════ */
+.promo{
+  position:relative;
+  overflow:hidden;
+  padding:72px 0;
+}
+.promo-bg{
+  position:absolute;inset:0;
+  background:url('assets/promo-banner.jpg') center/cover no-repeat;
+}
+.promo-scrim{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,rgba(139,10,31,.92) 0%,rgba(139,10,31,.7) 50%,rgba(10,8,6,.85) 100%),
+    rgba(10,8,6,.4);
+}
+.promo-inner{
+  position:relative;z-index:2;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:40px;flex-wrap:wrap;
+}
+.promo-left{max-width:560px}
+.promo-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;
+  background:rgba(255,215,0,.15);
+  border:1px solid rgba(255,215,0,.4);
+  border-radius:999px;
+  font-size:12px;letter-spacing:.12em;
+  color:#FFD700;margin-bottom:20px;
+  animation:pulseTag 2s ease-in-out infinite;
+}
+@keyframes pulseTag{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.3)}
+  50%{box-shadow:0 0 0 8px rgba(255,215,0,0)}
+}
+.promo-tag .fire{font-size:14px}
+.promo h2{
+  font-family:var(--font-cn);
+  font-size:clamp(1.8rem,3.6vw,3rem);
+  font-weight:900;color:#fff;
+  line-height:1.2;margin-bottom:12px;
+}
+.promo h2 .amount{
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-size:clamp(2.4rem,5vw,4.2rem);
+}
+.promo-desc{
+  font-size:15px;color:rgba(255,255,255,.75);
+  margin-bottom:28px;line-height:1.7;
+}
+.promo-steps{
+  display:flex;gap:24px;flex-wrap:wrap;margin-bottom:28px;
+}
+.promo-step{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:rgba(255,255,255,.8);
+}
+.promo-step .num{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  color:#5C1A0A;font-weight:900;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.promo-cta{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 36px;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  color:#5C1A0A;font-weight:900;font-size:16px;
+  border-radius:999px;letter-spacing:.04em;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+  box-shadow:0 8px 32px rgba(255,165,0,.4);
+}
+.promo-cta:hover{
+  transform:translateY(-3px) scale(1.02);
+  box-shadow:0 12px 40px rgba(255,165,0,.55);
+}
+.promo-cta svg{width:20px;height:20}
+.promo-right{
+  position:relative;
+  width:280px;height:280px;
+  flex-shrink:0;
+}
+.promo-chip-stack{
+  width:100%;height:100%;
+  background:url('assets/chip-macro.jpg') center/cover;
+  border-radius:50%;
+  border:3px solid rgba(255,215,0,.5);
+  box-shadow:0 0 60px rgba(255,165,0,.3),inset 0 0 30px rgba(0,0,0,.3);
+  animation:chipFloat 4s ease-in-out infinite;
+}
+@keyframes chipFloat{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-12px) rotate(2deg)}
+}
+.promo-badge{
+  position:absolute;top:-10px;right:-10px;
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#C8102E,#8B0A1F);
+  border:2px solid #FFD700;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#FFD700;font-weight:900;
+  box-shadow:0 4px 20px rgba(200,16,46,.5);
+  animation:badgeSpin 6s ease-in-out infinite;
+}
+.promo-badge .big{font-size:22px;line-height:1}
+.promo-badge .small{font-size:9px;letter-spacing:.1em}
+@keyframes badgeSpin{
+  0%,100%{transform:rotate(-8deg)}
+  50%{transform:rotate(8deg)}
+}
+@media(max-width:768px){
+  .promo-right{width:180px;height:180px;margin:0 auto}
+  .promo-inner{flex-direction:column;text-align:center}
+  .promo-steps{justify-content:center}
+}
+
+/* ═══════════════ 合规认证区 ═══════════════ */
+.compliance{
+  background:var(--world);
+  padding:100px 0;
+  position:relative;
+}
+.compliance::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-strong),transparent);
+}
+.compliance-head{text-align:center;margin-bottom:56px}
+.compliance-head h2{
+  font-family:var(--font-cn);
+  font-size:clamp(1.8rem,3.4vw,2.8rem);font-weight:900;
+  color:var(--ink);margin-bottom:12px;
+}
+.compliance-head p{color:var(--muted);font-size:15px}
+.compliance-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+.compliance-card{
+  position:relative;overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:var(--canvas);
+  transition:transform .4s var(--ease),border-color .4s;
+}
+.compliance-card:hover{
+  transform:translateY(-6px);
+  border-color:var(--accent);
+}
+.compliance-card-img{
+  width:100%;aspect-ratio:4/3;overflow:hidden;
+}
+.compliance-card-img img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .6s var(--ease);
+}
+.compliance-card:hover .compliance-card-img img{transform:scale(1.06)}
+.compliance-card-body{padding:24px}
+.compliance-card-body h4{
+  font-family:var(--font-cn);
+  font-size:17px;font-weight:700;color:var(--ink);
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.compliance-card-body h4::before{
+  content:"";width:4px;height:16px;
+  background:linear-gradient(180deg,var(--accent-light),var(--accent-dark));
+  border-radius:2px;
+}
+.compliance-card-body p{
+  font-size:13px;color:var(--muted);line-height:1.7;
+}
+.compliance-card .verified{
+  position:absolute;top:12px;right:12px;
+  display:flex;align-items:center;gap:4px;
+  padding:4px 10px;
+  background:rgba(212,175,55,.15);
+  border:1px solid rgba(212,175,55,.3);
+  border-radius:999px;
+  font-size:10px;color:var(--accent);
+  letter-spacing:.08em;font-weight:600;
+  backdrop-filter:blur(4px);
+}
+.compliance-card .verified svg{width:12px;height:12px}
+@media(max-width:900px){.compliance-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <svg viewBox="0 0 40 40" fill="none">
+      <path d="M6 6 L20 30 L34 6" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 16 C17 13 13 15 14.5 19 C14.5 21.5 17.5 22.5 20 25 C22.5 22.5 25.5 21.5 25.5 19 C27 15 23 13 20 16Z" fill="#D4AF37"/>
+      <path d="M20 25 L19 29 L21 29 Z" fill="#D4AF37"/>
+    </svg>
+    <span>V-<em>POKER</em></span>
+  </a>
+  <div class="nav-links">
+    <a href="#games">游戏介绍</a>
+    <a href="#tournament">赛事活动</a>
+    <a href="#trust">安全保障</a>
+  </div>
+  <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="nav-cta" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    下载App
+  </a>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="download">
+  <div class="hero-bg"></div>
+  <div class="hero-scrim"></div>
+  <div class="hero-gold-line"></div>
+  <div class="float-cards"><img src="assets/cards-float.jpg" alt=""></div>
+  <div class="hero-content">
+    <div class="hero-badge ha">
+      <span class="dot"></span>
+      万人在线 · 实时竞技
+    </div>
+    <h1 class="ha ha-d1">入局即<span class="gold">王者</span></h1>
+    <p class="hero-subtitle ha ha-d2">
+      抢庄牛牛<span>·</span>通比牛牛<span>·</span>炸金花<span>·</span>德州扑克
+    </p>
+    <div class="hero-actions ha ha-d3">
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="btn-download btn-primary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <span class="btn-text">
+          <small>Download on the</small>
+          <strong>App Store</strong>
+        </span>
+      </a>
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="btn-download btn-secondary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/>
+        </svg>
+        <span class="btn-text">
+          <small>Get it on</small>
+          <strong>Google Play</strong>
+        </span>
+      </a>
+    </div>
+    <div class="hero-trust ha ha-d4">
+      <div class="hero-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        公平公正
+      </div>
+      <div class="hero-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        极速流畅
+      </div>
+      <div class="hero-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        万人竞技
+      </div>
+      <div class="hero-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        安全保障
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ═══════════ PROMO BANNER ═══════════ -->
+<section class="promo" id="promo">
+  <div class="promo-bg"></div>
+  <div class="promo-scrim"></div>
+  <div class="promo-inner wrap">
+    <div class="promo-left">
+      <div class="promo-tag rv">
+        <span class="fire">🔥</span> 限时活动 · 新用户专享
+      </div>
+      <h2 class="rv rv-d1">下载APP即送<br><span class="amount">1000元</span>免费筹码</h2>
+      <p class="promo-desc rv rv-d2">注册登录即刻到账，无需充值即可体验全部玩法。抢庄牛牛、通比牛牛、炸金花、德州扑克，四大玩法任意畅玩，赢取的积分可兑换真实奖励。</p>
+      <div class="promo-steps rv rv-d3">
+        <div class="promo-step"><span class="num">1</span>下载V-POKER APP</div>
+        <div class="promo-step"><span class="num">2</span>注册登录账号</div>
+        <div class="promo-step"><span class="num">3</span>1000筹码到账</div>
+      </div>
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="promo-cta rv rv-d4" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        立即下载领取
+      </a>
+    </div>
+    <div class="promo-right rv rv-d2">
+      <div class="promo-chip-stack"></div>
+      <div class="promo-badge">
+        <span class="big">FREE</span>
+        <span class="small">限时</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ GAMES ═══════════ -->
+<section class="games" id="games">
+  <div class="wrap">
+    <div class="games-head rv">
+      <div class="section-label" style="justify-content:center">Four Games</div>
+      <h2>四大经典玩法</h2>
+      <p>从传统棋牌到竞技扑克，每一局都是智慧与胆识的较量</p>
+    </div>
+    <div class="games-grid">
+      <div class="game-card rv rv-d1">
+        <img src="assets/game-poker.jpg" alt="德州扑克" loading="lazy">
+        <div class="game-card-overlay">
+          <span class="game-card-num">01 / TEXAS HOLD'EM</span>
+          <h3>德州扑克</h3>
+          <p>国际通用规则，两轮下注四轮发牌，策略与心理的终极博弈，百人争霸赛定期开赛。</p>
+        </div>
+        <div class="game-card-border"></div>
+      </div>
+      <div class="game-card rv rv-d2">
+        <img src="assets/game-niuniu.jpg" alt="抢庄牛牛" loading="lazy">
+        <div class="game-card-overlay">
+          <span class="game-card-num">02 / QIANG ZHUANG</span>
+          <h3>抢庄牛牛</h3>
+          <p>经典牛牛玩法，抢庄定胜负，五张牌组合比大小，节奏明快，三分钟一局随时开战。</p>
+        </div>
+        <div class="game-card-border"></div>
+      </div>
+      <div class="game-card rv rv-d3">
+        <img src="assets/game-jinhua.jpg" alt="炸金花" loading="lazy">
+        <div class="game-card-overlay">
+          <span class="game-card-num">03 / ZHA JIN HUA</span>
+          <h3>炸金花</h3>
+          <p>三张牌比大小，闷牌与看牌的心理战，豹子顺金碾压全场，胆识决定上限。</p>
+        </div>
+        <div class="game-card-border"></div>
+      </div>
+      <div class="game-card rv rv-d4">
+        <img src="assets/chip-macro.jpg" alt="通比牛牛" loading="lazy">
+        <div class="game-card-overlay">
+          <span class="game-card-num">04 / TONG BI</span>
+          <h3>通比牛牛</h3>
+          <p>全民通比，无需抢庄，所有人同台竞技比牌型，公平透明，新手也能快速上手。</p>
+        </div>
+        <div class="game-card-border"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TOURNAMENT ═══════════ -->
+<section class="tournament" id="tournament">
+  <div class="tournament-bg"></div>
+  <div class="tournament-scrim"></div>
+  <div class="tournament-inner wrap">
+    <div class="tournament-head rv">
+      <div class="section-label">Live Events</div>
+      <h2>平台组织<em>火爆活动</em>进行中</h2>
+      <p>每日定时开赛，积分奖励实时到账，先到先占位</p>
+    </div>
+    <div class="tournament-cards">
+      <div class="tournament-card rv rv-d1">
+        <div class="tournament-prize">
+          <span class="amount">5000</span>
+          <span class="unit">积分奖池</span>
+        </div>
+        <h3>百人德州争霸赛</h3>
+        <div class="tournament-schedule">
+          <div class="row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="days">周一 / 周三 / 周五 / 周日</span>
+          </div>
+          <div class="row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>14:00 - 17:00 &nbsp;|&nbsp; 18:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="tournament-card rv rv-d2">
+        <div class="tournament-prize">
+          <span class="amount">5000</span>
+          <span class="unit">积分奖池</span>
+        </div>
+        <h3>百人金花争霸赛</h3>
+        <div class="tournament-schedule">
+          <div class="row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="days">周二 / 周四 / 周六</span>
+          </div>
+          <div class="row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>14:00 - 17:00 &nbsp;|&nbsp; 18:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tournament-cta rv rv-d3">
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="btn-download btn-primary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="btn-text"><strong>先到先占位，名额有限</strong></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TRUST ═══════════ -->
+<section class="trust" id="trust">
+  <div class="wrap">
+    <div class="trust-head rv">
+      <div class="section-label" style="justify-content:center">Why V-POKER</div>
+      <h2>为什么选择 V-POKER</h2>
+      <p>四大核心保障，让每一局都安心</p>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-item rv rv-d1">
+        <div class="trust-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h4>公平公正</h4>
+        <p>专业随机数发生器，牌局全程可追溯，杜绝一切作弊可能</p>
+      </div>
+      <div class="trust-item rv rv-d2">
+        <div class="trust-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h4>极速流畅</h4>
+        <p>全球节点加速，毫秒级响应，弱网环境依然稳定不掉线</p>
+      </div>
+      <div class="trust-item rv rv-d3">
+        <div class="trust-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h4>万人竞技</h4>
+        <p>真实玩家实时匹配，24小时不间断开赛，随时找到对手</p>
+      </div>
+      <div class="trust-item rv rv-d4">
+        <div class="trust-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h4>安全保障</h4>
+        <p>银行级数据加密，资金托管独立账户，隐私信息严格保护</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ COMPLIANCE ═══════════ -->
+<section class="compliance" id="compliance">
+  <div class="wrap">
+    <div class="compliance-head rv">
+      <div class="section-label" style="justify-content:center">Official Certification</div>
+      <h2>官方认证 · 合规运营</h2>
+      <p>多重安全资质认证，保障每一位玩家的资金与信息安全</p>
+    </div>
+    <div class="compliance-grid">
+      <div class="compliance-card rv rv-d1">
+        <div class="verified">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          VERIFIED
+        </div>
+        <div class="compliance-card-img">
+          <img src="assets/cert-shield.jpg" alt="安全认证" loading="lazy">
+        </div>
+        <div class="compliance-card-body">
+          <h4>安全认证</h4>
+          <p>通过国际信息安全管理体系认证，采用银行级SSL加密传输，全链路数据防护，确保用户信息与资金安全。</p>
+        </div>
+      </div>
+      <div class="compliance-card rv rv-d2">
+        <div class="verified">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          VERIFIED
+        </div>
+        <div class="compliance-card-img">
+          <img src="assets/cert-certificate.jpg" alt="合规运营" loading="lazy">
+        </div>
+        <div class="compliance-card-body">
+          <h4>合规运营</h4>
+          <p>持有合法运营资质，严格遵守当地法律法规，定期接受第三方审计，平台运营透明可查，公平公正公开。</p>
+        </div>
+      </div>
+      <div class="compliance-card rv rv-d3">
+        <div class="verified">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          VERIFIED
+        </div>
+        <div class="compliance-card-img">
+          <img src="assets/cert-encrypt.jpg" alt="数据加密" loading="lazy">
+        </div>
+        <div class="compliance-card-body">
+          <h4>数据加密</h4>
+          <p>采用AES-256端到端加密算法，随机数发生器通过国际认证，牌局全程可追溯，杜绝一切作弊可能。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FINAL CTA ═══════════ -->
+<section class="final-cta" id="download-final">
+  <div class="final-cta-bg"></div>
+  <div class="final-cta-scrim"></div>
+  <div class="final-cta-inner wrap">
+    <h2 class="rv">立即下载<br>开启你的<span class="gold">王者之路</span></h2>
+    <p class="rv rv-d1">iOS / Android 双端支持，注册即送新手礼包</p>
+    <div class="hero-actions rv rv-d2">
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="btn-download btn-primary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <span class="btn-text"><small>Download on the</small><strong>App Store</strong></span>
+      </a>
+      <a href="https://api.owcywmpr.com/api/mdm/link/3ijot9bg" class="btn-download btn-secondary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+        <span class="btn-text"><small>Get it on</small><strong>Google Play</strong></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M6 6 L20 30 L34 6" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 16 C17 13 13 15 14.5 19 C14.5 21.5 17.5 22.5 20 25 C22.5 22.5 25.5 21.5 25.5 19 C27 15 23 13 20 16Z" fill="#D4AF37"/>
+          <path d="M20 25 L19 29 L21 29 Z" fill="#D4AF37"/>
+        </svg>
+        <span>V-<em>POKER</em></span>
+      </a>
+      <p>V-POKER 是面向全球玩家的在线扑克竞技平台，致力于提供公平、安全、极致的棋牌竞技体验。</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h5>游戏</h5>
+        <a href="#games">德州扑克</a>
+        <a href="#games">抢庄牛牛</a>
+        <a href="#games">炸金花</a>
+        <a href="#games">通比牛牛</a>
+      </div>
+      <div class="footer-col">
+        <h5>活动</h5>
+        <a href="#tournament">百人德州赛</a>
+        <a href="#tournament">百人金花赛</a>
+        <a href="#tournament">积分商城</a>
+      </div>
+      <div class="footer-col">
+        <h5>支持</h5>
+        <a href="#">帮助中心</a>
+        <a href="#">联系客服</a>
+        <a href="#">用户协议</a>
+        <a href="#">隐私政策</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 V-POKER. All rights reserved.</span>
+    <span>版本 v2.0.1</span>
+  </div>
+  <div class="footer-disclaimer">
+    本平台仅提供虚拟积分竞技娱乐服务，不涉及任何真实货币交易。请理性娱乐，适度游戏。未成年人禁止使用本服务。
+  </div>
+</footer>
+
+<script>
+/* ── Nav 滚动状态 ── */
+const nav=document.getElementById('nav');
+let navTick=false;
+addEventListener('scroll',()=>{
+  if(!navTick){navTick=true;requestAnimationFrame(()=>{
+    navTick=false;
+    nav.classList.toggle('scrolled',scrollY>60);
+  });}
+},{passive:true});
+
+/* ── 入场揭示 ── */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ── Hero 背景视差缓推 ── */
+const heroBg=document.querySelector('.hero-bg');
+if(heroBg && !matchMedia('(prefers-reduced-motion:reduce)').matches){
+  let heroTick=false;
+  addEventListener('scroll',()=>{
+    if(!heroTick){heroTick=true;requestAnimationFrame(()=>{
+      heroTick=false;
+      const y=scrollY;
+      if(y<innerHeight){
+        heroBg.style.transform=`scale(1.05) translateY(${y*0.15}px)`;
+      }
+    });}
+  },{passive:true});
+}
+
+/* ── URL参数调试（?reveal=1 强制揭示入场动画，?scroll=N 滚动到指定位置）── */
+(function(){
+  var p=new URLSearchParams(location.search);
+  if(p.get('reveal')){
+    document.querySelectorAll('.rv').forEach(function(el){
+      el.style.opacity='1';el.style.transform='none';el.style.transition='none';
+    });
+    document.querySelectorAll('img[loading="lazy"]').forEach(function(img){img.loading='eager'});
+    var hero=document.querySelector('.hero');
+    if(hero){hero.style.height='780px';hero.style.minHeight='780px';}
+  }
+  if(p.get('scroll')){
+    addEventListener('load',function(){scrollTo(0,parseInt(p.get('scroll')))});
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+﻿# 部署临时文件
+deploy.html
+*.log
+.DS_Store
+Thumbs.db
